@@ -8,22 +8,11 @@ from datetime import datetime
 from .config import settings
 from .database import DatabaseManager
 
+# Simple FastAPI configuration (same as your working service)
 app = FastAPI(
     title=settings.API_TITLE,
     description=settings.API_DESCRIPTION,
-    version=settings.API_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
-)
-
-# Add CORS middleware for better browser compatibility
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    version=settings.API_VERSION
 )
 
 # Initialize database

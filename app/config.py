@@ -15,8 +15,18 @@ class Settings:
     BASE_URL: str = os.getenv("BASE_URL", "127.0.0.1:8000")
 
     # Application Configuration
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     DEBUG: bool = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")
     CODE_LENGTH: int = int(os.getenv("CODE_LENGTH", "6"))
+
+    # Environment-based properties
+    @property
+    def is_development(self) -> bool:
+        return self.ENVIRONMENT.lower() == "development"
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT.lower() == "production"
 
     # API Configuration
     API_TITLE: str = os.getenv("API_TITLE", "URL Shortener")
