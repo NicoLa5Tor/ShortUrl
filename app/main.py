@@ -14,14 +14,7 @@ app = FastAPI(
     version=settings.API_VERSION,
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json",
-    swagger_ui_parameters={
-        "displayRequestDuration": True,
-        "filter": True,
-        "showExtensions": True,
-        "showCommonExtensions": True,
-        "requestInterceptor": "(req) => { req.headers['Cache-Control'] = 'no-cache'; return req; }"
-    }
+    openapi_url="/openapi.json"
 )
 
 # Add CORS middleware for better browser compatibility
