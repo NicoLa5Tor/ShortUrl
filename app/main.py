@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
 import string, random
@@ -10,7 +11,26 @@ from .database import DatabaseManager
 app = FastAPI(
     title=settings.API_TITLE,
     description=settings.API_DESCRIPTION,
-    version=settings.API_VERSION
+    version=settings.API_VERSION,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    swagger_ui_parameters={
+        "displayRequestDuration": True,
+        "filter": True,
+        "showExtensions": True,
+        "showCommonExtensions": True,
+        "requestInterceptor": "(req) => { req.headers['Cache-Control'] = 'no-cache'; return req; }"
+    }
+)
+
+# Add CORS middleware for better browser compatibility
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Initialize database
