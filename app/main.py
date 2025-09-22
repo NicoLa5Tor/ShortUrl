@@ -141,6 +141,10 @@ def get_stats():
 # Ruta para redirigir desde el alias (DEBE IR AL FINAL para no interferir con otros endpoints)
 @app.get('/{codigo}')
 def redirigir(codigo: str):
+    # Excluir rutas reservadas de FastAPI
+    if codigo in ['docs', 'redoc', 'openapi.json', 'favicon.ico']:
+        raise HTTPException(status_code=404, detail='Ruta reservada')
+
     original_url = db.get_url(codigo)
     if original_url:
         return RedirectResponse(url=original_url, status_code=301)
