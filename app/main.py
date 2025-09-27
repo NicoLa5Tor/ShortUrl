@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from urllib.parse import urljoin
 import string, random
 from datetime import datetime
 from .config import settings
@@ -51,6 +52,11 @@ def generar_codigo(longitud: int = None):
         longitud = settings.CODE_LENGTH
     return ''.join(random.choices(string.ascii_letters + string.digits, k=longitud))
 
+
+def build_short_url(code: str) -> str:
+    base_url = settings.BASE_URL.rstrip('/') + '/'
+    return urljoin(base_url, code)
+
 # Ruta para acortar una URL
 @app.post('/shorten', response_model=URLResponse)
 def acortar_url(request: URLRequest):
@@ -70,7 +76,7 @@ def acortar_url(request: URLRequest):
         raise HTTPException(status_code=500, detail='Error al guardar URL')
 
     return URLResponse(
-        short_url=f'{settings.BASE_URL}/{codigo}',
+        short_url=build_short_url(codigo),
         original_url=request.url
     )
 
@@ -87,7 +93,7 @@ def get_all_urls(limit: Optional[int] = Query(None, ge=1, description="Limit num
             id=url_data['id'],
             code=url_data['code'],
             original_url=url_data['original_url'],
-            short_url=f'{settings.BASE_URL}/{url_data["code"]}',
+            short_url=build_short_url(url_data['code']),
             created_at=url_data['created_at']
         ))
 
@@ -104,7 +110,7 @@ def get_url_details(code: str):
         id=url_data['id'],
         code=url_data['code'],
         original_url=url_data['original_url'],
-        short_url=f'{settings.BASE_URL}/{url_data["code"]}',
+        short_url=build_short_url(url_data['code']),
         created_at=url_data['created_at']
     )
 
