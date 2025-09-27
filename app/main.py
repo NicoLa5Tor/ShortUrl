@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
+from urllib.parse import urljoin, urlparse
 import string, random
 from datetime import datetime
 from .config import settings
@@ -51,6 +52,28 @@ def generar_codigo(longitud: int = None):
         longitud = settings.CODE_LENGTH
     return ''.join(random.choices(string.ascii_letters + string.digits, k=longitud))
 
+
+def ensure_absolute_url(url: str) -> str:
+    """Ensure the provided URL includes a scheme so clients receive an absolute URL."""
+    if not url:
+        return url
+
+    normalized = url.strip()
+    parsed = urlparse(normalized)
+
+    if parsed.scheme:
+        return normalized
+
+    if normalized.startswith("//"):
+        return f"http:{normalized}"
+
+    return f"http://{normalized}"
+
+
+def build_short_url(code: str) -> str:
+    base_url = settings.BASE_URL.rstrip('/') + '/'
+    return urljoin(base_url, code)
+
 # Ruta para acortar una URL
 @app.post('/shorten', response_model=URLResponse)
 def acortar_url(request: URLRequest):
@@ -66,12 +89,14 @@ def acortar_url(request: URLRequest):
         while db.code_exists(codigo):
             codigo = generar_codigo()
 
-    if not db.save_url(codigo, request.url):
+    original_url = ensure_absolute_url(request.url)
+
+    if not db.save_url(codigo, original_url):
         raise HTTPException(status_code=500, detail='Error al guardar URL')
 
     return URLResponse(
-        short_url=f'{settings.BASE_URL}/{codigo}',
-        original_url=request.url
+        short_url=build_short_url(codigo),
+        original_url=original_url
     )
 
 # CRUD Endpoints (deben ir ANTES del endpoint /{codigo} para evitar conflictos)
@@ -86,8 +111,8 @@ def get_all_urls(limit: Optional[int] = Query(None, ge=1, description="Limit num
         urls_details.append(URLDetails(
             id=url_data['id'],
             code=url_data['code'],
-            original_url=url_data['original_url'],
-            short_url=f'{settings.BASE_URL}/{url_data["code"]}',
+            original_url=ensure_absolute_url(url_data['original_url']),
+            short_url=build_short_url(url_data['code']),
             created_at=url_data['created_at']
         ))
 
@@ -103,8 +128,8 @@ def get_url_details(code: str):
     return URLDetails(
         id=url_data['id'],
         code=url_data['code'],
-        original_url=url_data['original_url'],
-        short_url=f'{settings.BASE_URL}/{url_data["code"]}',
+        original_url=ensure_absolute_url(url_data['original_url']),
+        short_url=build_short_url(url_data['code']),
         created_at=url_data['created_at']
     )
 
@@ -147,7 +172,7 @@ def redirigir(codigo: str):
 
     original_url = db.get_url(codigo)
     if original_url:
-        return RedirectResponse(url=original_url, status_code=301)
+        return RedirectResponse(url=ensure_absolute_url(original_url), status_code=301)
     raise HTTPException(status_code=404, detail='Alias no encontrado')
 
 if __name__ == '__main__':
