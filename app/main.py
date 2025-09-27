@@ -70,7 +70,7 @@ def acortar_url(request: URLRequest):
         raise HTTPException(status_code=500, detail='Error al guardar URL')
 
     return URLResponse(
-        short_url=f'http://{settings.BASE_URL}/{codigo}',
+        short_url=f'{settings.BASE_URL}/{codigo}',
         original_url=request.url
     )
 
@@ -87,7 +87,7 @@ def get_all_urls(limit: Optional[int] = Query(None, ge=1, description="Limit num
             id=url_data['id'],
             code=url_data['code'],
             original_url=url_data['original_url'],
-            short_url=f'http://{settings.BASE_URL}/{url_data["code"]}',
+            short_url=f'{settings.BASE_URL}/{url_data["code"]}',
             created_at=url_data['created_at']
         ))
 
@@ -104,7 +104,7 @@ def get_url_details(code: str):
         id=url_data['id'],
         code=url_data['code'],
         original_url=url_data['original_url'],
-        short_url=f'http://{settings.BASE_URL}/{url_data["code"]}',
+        short_url=f'{settings.BASE_URL}/{url_data["code"]}',
         created_at=url_data['created_at']
     )
 
