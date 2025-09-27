@@ -57,11 +57,18 @@ def build_short_url(code: str) -> str:
     base_url = settings.BASE_URL.rstrip('/') + '/'
     return urljoin(base_url, code)
 
+
+def normalize_original_url(url: str) -> str:
+    """Ensure the original URL includes a scheme."""
+    return settings._ensure_scheme(url)
+
 # Ruta para acortar una URL
 @app.post('/shorten', response_model=URLResponse)
 def acortar_url(request: URLRequest):
     if not request.url:
         raise HTTPException(status_code=400, detail='Se requiere una URL')
+
+    normalized_url = normalize_original_url(request.url)
 
     if request.alias:
         if db.code_exists(request.alias):
@@ -72,12 +79,12 @@ def acortar_url(request: URLRequest):
         while db.code_exists(codigo):
             codigo = generar_codigo()
 
-    if not db.save_url(codigo, request.url):
+    if not db.save_url(codigo, normalized_url):
         raise HTTPException(status_code=500, detail='Error al guardar URL')
 
     return URLResponse(
         short_url=build_short_url(codigo),
-        original_url=request.url
+        original_url=normalized_url
     )
 
 # CRUD Endpoints (deben ir ANTES del endpoint /{codigo} para evitar conflictos)
